@@ -1,0 +1,139 @@
+[
+  {
+    "id": "q01",
+    "question": "What are the two sub-layers in each Transformer encoder layer?",
+    "type": "fact",
+    "expected_paper": "Attention Is All You Need",
+    "expected_sections": ["Encoder and Decoder Stacks"],
+    "expected_facts": ["Each Transformer encoder layer contains a multi-head self-attention sub-layer and a position-wise feed-forward sub-layer."]
+  },
+  {
+    "id": "q02",
+    "question": "Why is positional encoding necessary in the Transformer?",
+    "type": "fact",
+    "expected_paper": "Attention Is All You Need",
+    "expected_sections": ["Positional Encoding"],
+    "expected_facts": ["Positional encodings provide information about token order because the model contains no recurrence or convolution."]
+  },
+  {
+    "id": "q03",
+    "question": "What is multi-head attention used for in the Transformer?",
+    "type": "fact",
+    "expected_paper": "Attention Is All You Need",
+    "expected_sections": ["Multi-Head Attention", "Applications of Attention in our Model"],
+    "expected_facts": ["Multi-head attention lets the model attend to information from different representation subspaces at different positions."]
+  },
+  {
+    "id": "q04",
+    "question": "What is the inner dimension of the Transformer position-wise feed-forward network?",
+    "type": "fact",
+    "expected_paper": "Attention Is All You Need",
+    "expected_sections": ["Position-wise Feed-Forward Networks"],
+    "expected_facts": ["The inner feed-forward layer has dimension 2048."]
+  },
+  {
+    "id": "q05",
+    "question": "How is the Transformer encoder structured?",
+    "type": "fact",
+    "expected_paper": "Attention Is All You Need",
+    "expected_sections": ["Encoder and Decoder Stacks", "Model Architecture"],
+    "expected_facts": ["The Transformer encoder is a stack of six identical layers."]
+  },
+  {
+    "id": "q06",
+    "question": "What architecture does the original Transformer use?",
+    "type": "fact",
+    "expected_paper": "Attention Is All You Need",
+    "expected_sections": ["Model Architecture", "Encoder and Decoder Stacks"],
+    "expected_facts": ["The original Transformer uses an encoder-decoder architecture."]
+  },
+  {
+    "id": "q07",
+    "question": "Why can the Transformer train faster than recurrent or convolutional architectures?",
+    "type": "fact",
+    "expected_paper": "Attention Is All You Need",
+    "expected_sections": ["Why Self-Attention", "Conclusion"],
+    "expected_facts": ["The Transformer permits substantially more parallelization than recurrent models."]
+  },
+  {
+    "id": "q08",
+    "question": "What is BERT's model architecture?",
+    "type": "fact",
+    "expected_paper": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+    "expected_sections": ["BERT"],
+    "expected_facts": ["BERT is a multi-layer bidirectional Transformer encoder."]
+  },
+  {
+    "id": "q09",
+    "question": "What type of self-attention does BERT use?",
+    "type": "fact",
+    "expected_paper": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+    "expected_sections": ["BERT"],
+    "expected_facts": ["BERT uses bidirectional self-attention."]
+  },
+  {
+    "id": "q10",
+    "question": "What are BERT BASE and BERT LARGE?",
+    "type": "fact",
+    "expected_paper": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+    "expected_sections": ["BERT", "Effect of Model Size"],
+    "expected_facts": ["BERT BASE has 12 layers, hidden size 768, and 12 attention heads.", "BERT LARGE has 24 layers, hidden size 1024, and 16 attention heads."]
+  },
+  {
+    "id": "q11",
+    "question": "How is BERT pre-trained?",
+    "type": "fact",
+    "expected_paper": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+    "expected_sections": ["Pre-training BERT"],
+    "expected_facts": ["BERT is pre-trained with masked language modeling and next sentence prediction."]
+  },
+  {
+    "id": "q12",
+    "question": "What is the difference between pre-training and fine-tuning in BERT?",
+    "type": "fact",
+    "expected_paper": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+    "expected_sections": ["BERT", "Pre-training BERT", "Fine-tuning BERT"],
+    "expected_facts": ["BERT is pre-trained on unlabeled data and fine-tuned using labeled downstream-task data."]
+  },
+  {
+    "id": "q13",
+    "question": "What input representation does BERT use?",
+    "type": "fact",
+    "expected_paper": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+    "expected_sections": ["BERT"],
+    "expected_facts": ["BERT input representations combine token, segment, and position embeddings."]
+  },
+  {
+    "id": "q14",
+    "question": "Compare BERT with the original Transformer architecture.",
+    "type": "comparison",
+    "expected_papers": ["BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding", "Attention Is All You Need"],
+    "expected_facts": ["BERT is encoder-based.", "The original Transformer uses an encoder-decoder architecture."]
+  },
+  {
+    "id": "q15",
+    "question": "What architectural difference exists between BERT and the original Transformer?",
+    "type": "comparison",
+    "expected_papers": ["BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding", "Attention Is All You Need"],
+    "expected_facts": ["BERT uses a bidirectional Transformer encoder.", "The original Transformer contains an encoder and a decoder."]
+  },
+  {
+    "id": "q16",
+    "question": "How does BERT self-attention differ from the attention setup described in the original Transformer?",
+    "type": "comparison",
+    "expected_papers": ["BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding", "Attention Is All You Need"],
+    "expected_facts": ["BERT uses bidirectional self-attention.", "The original Transformer masks self-attention in its decoder to prevent attending to subsequent positions."]
+  },
+  {
+    "id": "q17",
+    "question": "What learning rate does GPT-4 use during pre-training?",
+    "type": "insufficient_evidence",
+    "expected_answerable": false
+  },
+  {
+    "id": "q18",
+    "question": "How does the Transformer perform on ImageNet image classification?",
+    "type": "insufficient_evidence",
+    "expected_answerable": false
+  }
+]

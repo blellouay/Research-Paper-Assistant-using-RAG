@@ -1,0 +1,8 @@
+jupyterlab
+ipykernel
+pypdf
+streamlit
+requests
+sentence-transformers
+qdrant-client
+ollama
