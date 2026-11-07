@@ -17,7 +17,8 @@ def flatten_sections(sections, parent_title=""):
 
         flattened.append({
             "section": full_title,
-            "paragraphs": section.get("paragraphs", [])
+            "paragraphs": section.get("paragraphs", []),
+            "elements": section.get("elements", []),
         })
 
         subsections = section.get("subsections", [])
@@ -84,9 +85,62 @@ def create_chunks(paper, document_name):
                 "document": document_name,
                 "paper_title": paper["title"],
                 "section": section["section"],
-                "text": text
+                "text": text,
+                "element_type": "paragraph",
+                "label": "",
+                "caption": "",
             })
 
+            chunk_id += 1
+
+        for element in section.get("elements", []):
+            text = element.get("text", "").strip()
+            if not text:
+                continue
+            chunks.append({
+                "chunk_id": chunk_id,
+                "document": document_name,
+                "paper_title": paper["title"],
+                "section": element.get("section") or section["section"],
+                "text": text,
+                "element_type": element.get("type", "document_element"),
+                "label": element.get("label", ""),
+                "caption": element.get("caption", ""),
+                "coords": element.get("coords", ""),
+            })
+            chunk_id += 1
+
+    for element in paper.get("elements", []):
+        text = element.get("text", "").strip()
+        if not text:
+            continue
+        chunks.append({
+            "chunk_id": chunk_id,
+            "document": document_name,
+            "paper_title": paper["title"],
+            "section": element.get("section", "Figures and Tables"),
+            "text": text,
+            "element_type": element.get("type", "document_element"),
+            "label": element.get("label", ""),
+            "caption": element.get("caption", ""),
+            "coords": element.get("coords", ""),
+        })
+        chunk_id += 1
+
+    for reference in paper.get("references", []):
+        text = reference.get("text", "").strip()
+        if text:
+            chunks.append({
+                "chunk_id": chunk_id,
+                "document": document_name,
+                "paper_title": paper["title"],
+                "section": "References",
+                "text": text,
+                "element_type": "reference",
+                "label": reference.get("label", ""),
+                "caption": "",
+                "coords": "",
+            })
             chunk_id += 1
 
     return chunks

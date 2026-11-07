@@ -1,5 +1,5 @@
 \documentclass[a0,portrait]{a0poster}
-\usepackage[top=3.2cm,bottom=2.5cm,left=3.5cm,right=3.5cm]{geometry}
+\usepackage[top=3.0cm,bottom=1.5cm,left=3.2cm,right=3.2cm]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{times}
@@ -24,27 +24,30 @@
 \definecolor{PosterInk}{HTML}{17212B}
 \definecolor{PosterLight}{HTML}{F3F7FA}
 \definecolor{PosterLine}{HTML}{CBD8E3}
+\definecolor{ReferenceNavy}{HTML}{000099}
+\definecolor{ReferenceGreen}{HTML}{20943A}
+\definecolor{ReferenceOrange}{HTML}{D97818}
 
 \setlength{\columnsep}{2.0cm}
-\setlength{\columnseprule}{0pt}
+\setlength{\columnseprule}{1.6pt}
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{0.25em}
+\setlength{\parskip}{0.15em}
 \setlist[itemize]{leftmargin=1.15em,itemsep=0.16em,topsep=0.18em}
 
 \newtcolorbox{posterbox}[2][]{
   enhanced,
   colback=white,
-  colframe=PosterLine,
-  boxrule=1.5pt,
-  arc=5mm,
-  left=7mm,right=7mm,top=4mm,bottom=5mm,
+  colframe=white,
+  boxrule=0pt,
+  arc=0mm,
+  left=0mm,right=0mm,top=1mm,bottom=2mm,
   title={#2},
-  coltitle=white,
-  colbacktitle=PosterNavy,
+  coltitle=black,
+  colbacktitle=white,
   fonttitle=\bfseries\LARGE,
-  attach boxed title to top left={xshift=0mm,yshift=-1mm},
-  boxed title style={arc=4mm,boxrule=0pt},
-  before skip=7mm,after skip=7mm,
+  attach boxed title to top left={xshift=0mm,yshift=-2mm},
+  boxed title style={arc=0mm,boxrule=0pt,colback=white},
+  before skip=3mm,after skip=6mm,
   #1
 }
 
@@ -69,60 +72,60 @@
 \begin{document}
 \color{PosterInk}
 
-% Header - preserves the template's title-led identity and navy palette.
-\begin{tcolorbox}[
-  enhanced,colback=PosterNavy,colframe=PosterNavy,arc=6mm,boxrule=0pt,
-  left=15mm,right=15mm,top=11mm,bottom=11mm]
-  \begin{minipage}[c]{0.76\linewidth}
-    {\color{white}\VeryHuge\bfseries
-      Research Paper Assistant using Retrieval-Augmented Generation (RAG)}\\[4mm]
-    {\color{PosterGold}\huge
-      A Multi-Paper Scientific QA System with Claim-Level Hallucination Verification}
-  \end{minipage}\hfill
-  \begin{minipage}[c]{0.20\linewidth}
-    \centering
-    \begin{tikzpicture}
-      \node[draw=white,line width=2pt,rounded corners=4mm,
-        text=white,align=center,minimum width=10cm,minimum height=5.2cm,
-        font=\bfseries\LARGE] {LOCAL\\EVIDENCE-FIRST\\RAG};
-    \end{tikzpicture}
-  \end{minipage}
-\end{tcolorbox}
+% Header follows the supplied ESSAI academic-poster reference.
+\begin{minipage}[t]{0.78\linewidth}
+  {\color{ReferenceNavy}\VeryHuge\bfseries
+    Research Paper Assistant using\\Retrieval-Augmented Generation (RAG)}\\[3mm]
+  {\huge\itshape Multimodal, Multi-Paper Scientific QA\\
+    with Grounded Visual and Claim Verification}\\[5mm]
+  {\Huge\bfseries Louay Blel}\\[1mm]
+  {\Large Engineering School of Statistics and Information Analysis,
+    University of Carthage, Tunisia}\\[1mm]
+  {\large\texttt{louay.blel@essai.ucar.tn} --- (+216) 29 065 296}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.19\linewidth}
+  \vspace{-10mm}
+  \raggedleft
+  \includegraphics[width=0.95\linewidth]{poster/reference_logos.png}
+\end{minipage}
 
 \vspace{5mm}
 
 % Prominent architecture diagram.
-\begin{tcolorbox}[enhanced,colback=PosterLight,colframe=PosterBlue,
-  boxrule=2pt,arc=5mm,left=7mm,right=7mm,top=6mm,bottom=6mm]
-{\color{PosterNavy}\bfseries\LARGE End-to-end architecture}\par\vspace{4mm}
+\begin{tcolorbox}[enhanced,colback=white,colframe=white,
+  boxrule=0pt,arc=0mm,left=0mm,right=0mm,top=2mm,bottom=2mm]
 \centering
 \resizebox{0.98\textwidth}{!}{%
-\begin{tikzpicture}[node distance=0.7cm]
+\begin{tikzpicture}[node distance=0.9cm and 1.45cm]
   \node[stage] (pdf) {PDF Papers};
   \node[stage,right=of pdf] (grobid) {GROBID\\TEI/XML};
   \node[stage,right=of grobid] (sections) {Structured\\Sections};
-  \node[stage,right=of sections] (chunks) {Section-Aware\\Chunks};
+  \node[stage,right=of sections] (chunks) {Text, Tables, Figures,\\Equations + References};
   \node[stage,right=of chunks] (embed) {Sentence Transformer\\Embeddings};
   \node[stage,right=of embed] (qdrant) {Qdrant\\Vector Index};
-  \node[stage,right=of qdrant] (query) {User Query +\\Dense Retrieval};
+  \node[stage,below=1.7cm of pdf] (query) {User Query +\\Dense Retrieval};
   \node[stage,right=of query] (rerank) {Cross-Encoder\\Reranking};
-  \node[stage,right=of rerank] (llm) {Ollama LLM\\Draft Answer};
+  \node[stage,right=of rerank] (llm) {Groq Vision / Ollama\\Draft Answer};
   \node[stage,right=of llm] (claims) {Atomic Claim\\Extraction};
   \node[stage,right=of claims] (check) {Claim-Level\\Verification};
   \node[stage,right=of check,fill=PosterCyan!15] (final) {Grounded Answer\\+ Citations};
   \foreach \a/\b in {pdf/grobid,grobid/sections,sections/chunks,chunks/embed,
-    embed/qdrant,qdrant/query,query/rerank,rerank/llm,llm/claims,claims/check,check/final}
+    embed/qdrant,query/rerank,rerank/llm,llm/claims,claims/check,check/final}
     \draw[flow] (\a) -- (\b);
+  \draw[flow] (qdrant.south) |- (query.north);
   \node[group=PosterBlue,fit=(pdf)(grobid)(sections)(chunks),label={[font=\bfseries\Large,text=PosterBlue]above:Document Processing}] {};
   \node[group=PosterCyan,fit=(embed)(qdrant),label={[font=\bfseries\Large,text=PosterCyan]above:Indexing}] {};
-  \node[group=PosterBlue,fit=(query)(rerank),label={[font=\bfseries\Large,text=PosterBlue]above:Retrieval}] {};
-  \node[group=PosterCyan,fit=(llm)(claims)(check)(final),label={[font=\bfseries\Large,text=PosterCyan]above:Generation and Verification}] {};
+  \node[group=PosterBlue,fit=(query)(rerank),label={[font=\bfseries\Large,text=PosterBlue]below:Retrieval}] {};
+  \node[group=PosterCyan,fit=(llm)(claims)(check)(final),label={[font=\bfseries\Large,text=PosterCyan]below:Generation and Verification}] {};
 \end{tikzpicture}}
+\par\vspace{1mm}
+{\small\color{ReferenceGreen}\bfseries Figure 1: End-to-end architecture of the multimodal, evidence-first RAG pipeline.}
 \end{tcolorbox}
 
+\small
 \begin{multicols}{3}
 
-\begin{posterbox}{Problem and objective}
+\begin{posterbox}{Abstract and objective}
 Researchers must locate evidence across long, structured papers. General-purpose
 language models can answer from outside knowledge or introduce unsupported claims.
 
@@ -131,28 +134,31 @@ retrieved evidence, with citations and claim-level filtering before synthesis.
 
 \begin{itemize}
   \item Ingest multiple scientific PDFs.
-  \item Preserve document structure and provenance.
+  \item Preserve text, tables, figures, equations, references, and provenance.
   \item Retrieve and rerank relevant passages.
-  \item Compare evidence across named papers.
+  \item Compare evidence across named papers and requested aspects.
+  \item Answer questions from both text and cropped paper figures.
   \item Remove claims not supported by retrieved excerpts.
 \end{itemize}
 \end{posterbox}
 
 \begin{posterbox}{Scientific PDF ingestion}
 \textbf{GROBID} converts PDFs into structured TEI/XML. The parser retains title,
-authors, abstract, sections, subsections, and paragraphs.
+authors, abstract, sections, paragraphs, tables, formulas, bibliography entries,
+figure captions, and PDF crop coordinates.
 
 \begin{center}
 \begin{tikzpicture}[node distance=1.1cm]
   \node[verify] (a) {Scientific PDF};
   \node[verify,right=of a] (b) {GROBID};
-  \node[verify,right=of b] (c) {Structured Sections};
+  \node[verify,right=of b] (c) {Typed Evidence};
   \draw[flow] (a)--(b); \draw[flow] (b)--(c);
 \end{tikzpicture}
 \end{center}
 
-Structure-aware extraction gives downstream chunks meaningful section context
-instead of treating a paper as an undifferentiated text stream.
+\textbf{PyMuPDF} uses GROBID coordinates to crop retrieved figures from the
+original PDF. The same image is displayed with the answer and sent to Groq's
+vision-capable model for grounded visual interpretation.
 \end{posterbox}
 
 \begin{posterbox}{Section-aware semantic indexing}
@@ -160,7 +166,8 @@ Each chunk retains:
 \begin{itemize}
   \item paper title and document name,
   \item section name and chunk ID,
-  \item scientific text.
+  \item evidence type, label, and caption,
+  \item figure crop coordinates when available.
 \end{itemize}
 
 \begin{center}
@@ -195,12 +202,28 @@ Dense retrieval supplies candidates. The
 question-passage pair and improves evidence ordering.
 \end{posterbox}
 
+\begin{posterbox}{Technology stack}
+\begin{center}
+\renewcommand{\arraystretch}{1.45}
+\begin{tabular}{p{0.30\linewidth}p{0.60\linewidth}}
+\textbf{Language} & Python \\
+\textbf{Parsing} & GROBID, TEI/XML, PyMuPDF \\
+\textbf{Embeddings} & Sentence Transformers \\
+\textbf{Vector store} & Qdrant \\
+\textbf{Reranking} & Cross-Encoder \\
+\textbf{Generation} & Groq Qwen3.8 27B Vision; Ollama Llama 3.1 8B \\
+\textbf{Interface} & Streamlit \\
+\textbf{Workflow} & Docker, Jupyter \\
+\end{tabular}
+\end{center}
+\end{posterbox}
+
 \columnbreak
 
-\begin{posterbox}[colframe=PosterCyan]{Multi-paper comparison}
-Naive global search can over-represent one paper or retrieve a passage that only
-mentions the target model. The system resolves the primary subject and routes
-atomic claims to the relevant paper before claim-specific retrieval.
+\begin{posterbox}{Multi-paper comparison}
+Naive global search can over-represent one paper. Broad comparison questions are
+decomposed into objectives, methods, datasets, results, limitations, and
+contributions. Each aspect is retrieved independently for every selected paper.
 
 \begin{center}
 \resizebox{0.98\linewidth}{!}{%
@@ -214,12 +237,13 @@ atomic claims to the relevant paper before claim-specific retrieval.
 \end{tikzpicture}}
 \end{center}
 
-\textbf{Routing signals:} atomic decomposition, entity detection,
-primary-subject identification, referenced-entity distinction, paper filters,
-and claim-specific retrieval.
+\textbf{Routing signals:} paper filters, aspect decomposition, balanced evidence,
+atomic claims, entity detection, primary-subject identification, and
+claim-specific retrieval. Dataset and result searches retrieve extra passages
+to recover named benchmarks and numerical metrics.
 \end{posterbox}
 
-\begin{posterbox}[colframe=PosterCyan]{Claim-level hallucination reduction}
+\begin{posterbox}{Claim-level hallucination reduction}
 \begin{center}
 \begin{tikzpicture}[node distance=0.65cm]
   \node[verify] (draft) {Draft Answer};
@@ -282,9 +306,9 @@ both encoder and decoder components.
 \columnbreak
 
 \begin{posterbox}{Evaluation framework implemented}
-No completed evaluation run was available in
-\texttt{evaluation/results/}; therefore, no performance numbers or charts are
-shown.
+The repository includes deterministic unit tests and a reusable end-to-end
+evaluation framework. No completed benchmark run is stored in
+\texttt{evaluation/results/}, so the poster does not invent performance scores.
 
 \textbf{Retrieval evaluation}
 \begin{itemize}
@@ -303,16 +327,16 @@ shown.
 
 \begin{center}
 \metric{18}{Evaluation questions}\hfill
-\metric{3}{Cross-paper comparisons}\\[5mm]
-\metric{2}{Abstention tests}\hfill
+\metric{50}{Passing unit tests}\\[5mm]
+\metric{4}{Structured evidence types}\hfill
 \metric{0}{Fabricated metrics}
 \end{center}
 \end{posterbox}
 
-\begin{posterbox}[colframe=PosterBlue]{Streamlit User Interface}
-The Streamlit interface lets users operate the complete RAG pipeline without
-notebooks or terminal commands: upload papers, manage the indexed library,
-choose a search scope, and ask single-paper or comparison questions.
+\begin{posterbox}{Streamlit User Interface}
+The Streamlit interface operates the complete pipeline: upload and replace
+indexed papers, choose a single- or multi-paper scope, select local Ollama or
+Groq API generation, ask questions, and inspect textual and visual evidence.
 
 \begin{center}
 \resizebox{0.98\linewidth}{!}{%
@@ -327,14 +351,16 @@ choose a search scope, and ask single-paper or comparison questions.
      $\boldsymbol{+}$ Upload PDFs\\
      $\circ$ BERT\\
      $\circ$ Transformer\\[2mm]
-     \textbf{Search scope}};
+     \textbf{Multi-paper scope}\\
+     \textbf{Provider:} Groq / Ollama};
   \node[anchor=north west,draw=PosterCyan,line width=1.2pt,rounded corners=3mm,
     fill=white,minimum width=16.7cm,minimum height=7.6cm,
     text width=15.5cm,align=left,inner sep=5mm]
     at ([xshift=7.8cm,yshift=-5mm]frame.north west)
     {\textbf{Research Paper Assistant}\\[2mm]
      \textbf{User:} Compare BERT and Transformer.\\[2mm]
-     \textbf{Answer:} Grounded comparison \textcolor{PosterBlue}{[Source 1]}\\[2mm]
+     \textbf{Answer:} Grounded comparison \textcolor{PosterBlue}{[Source 1]}\\
+     \textbf{Visual evidence:} Figure crop\\[2mm]
      \textbf{Sources}\\
      BERT --- Model Architecture\\
      Transformer --- Model Architecture\\[-1mm]
@@ -354,58 +380,51 @@ choose a search scope, and ask single-paper or comparison questions.
 \end{tikzpicture}}
 \end{center}
 
-\textbf{Transparent answers:} citations expose the paper title, section, and
-retrieved chunk behind each answer. Users may expand evidence and optionally
-inspect supported and rejected claims.
+\textbf{Transparent answers:} citations expose paper, section, evidence type,
+label, and excerpt. Retrieved figures appear directly below the answer and again
+inside Sources. The UI reports single-paper, multi-paper, or library-wide scope.
 \end{posterbox}
 
 \begin{posterbox}{Implemented contributions}
 \begin{itemize}
   \item Structure-aware scientific PDF ingestion.
-  \item Section-aware semantic indexing with provenance.
+  \item Typed indexing of paragraphs, tables, equations, figures, and references.
+  \item Coordinate-based figure cropping and multimodal Groq inference.
   \item Dense retrieval plus cross-encoder reranking.
-  \item Paper-aware multi-paper evidence routing.
+  \item Aspect-balanced, paper-aware multi-paper evidence routing.
   \item Atomic claim extraction and source-scope verification.
-  \item Citation-grounded synthesis and reusable evaluation.
+  \item Citation-grounded synthesis, safe re-index replacement, and evaluation.
 \end{itemize}
 \end{posterbox}
 
-\begin{posterbox}{Technology stack}
-\begin{center}
-\renewcommand{\arraystretch}{1.45}
-\begin{tabular}{p{0.30\linewidth}p{0.60\linewidth}}
-\textbf{Language} & Python \\
-\textbf{Parsing} & GROBID, TEI/XML, PyMuPDF \\
-\textbf{Embeddings} & Sentence Transformers \\
-\textbf{Vector store} & Qdrant \\
-\textbf{Reranking} & Cross-Encoder \\
-\textbf{Local LLM} & Ollama, Llama 3.2 3B \\
-\textbf{Interface} & Streamlit \\
-\textbf{Workflow} & Docker, Jupyter \\
-\end{tabular}
-\end{center}
-\end{posterbox}
-
-\begin{posterbox}{Limitations and future work}
+\begin{posterbox}{Perspectives}
 \begin{itemize}
-  \item Local LLM verification can make semantic judgment errors.
+  \item Groq sends selected excerpts and figure crops to a cloud service.
+  \item Figures without GROBID coordinates remain caption-only evidence.
   \item Dense retrieval can miss highly specific technical evidence.
-  \item Claim verification increases inference time.
-  \item Next: hybrid retrieval, batched NLI verification, and a larger evaluation set.
+  \item Verified mode increases API calls and inference time.
+  \item Next: hybrid retrieval, visual-table OCR, and a larger benchmark run.
 \end{itemize}
 \end{posterbox}
 
-\begin{posterbox}[colback=PosterNavy,colframe=PosterNavy,coltext=white]{Conclusion}
-The system combines structured scientific document processing, semantic
-retrieval, reranking, and claim-level verification to produce evidence-grounded
-answers across multiple research papers.
+\begin{posterbox}{Conclusion}
+\color{ReferenceOrange}
+The system combines typed scientific-document processing, balanced multi-paper
+retrieval, visual figure understanding, cloud or local generation, citations,
+and claim-level verification to answer from evidence researchers can inspect.
+\color{black}
+\end{posterbox}
+
+\begin{posterbox}{References}
+{\footnotesize
+[1] P. Lewis et al. Retrieval-augmented generation for knowledge-intensive NLP
+tasks. \textit{NeurIPS}, 2020.\par
+[2] A. Vaswani et al. Attention is all you need. \textit{NeurIPS}, 2017.\par
+[3] J. Devlin et al. BERT: Pre-training of deep bidirectional transformers for
+language understanding. \textit{NAACL-HLT}, 2019.}
 \end{posterbox}
 
 \end{multicols}
-
-\vfill
-\begin{center}
-{\large\color{PosterNavy}\bfseries Research Paper Assistant \textbullet\ Local, source-grounded, multi-paper RAG}
-\end{center}
+\normalsize
 
 \end{document}

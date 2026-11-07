@@ -7,6 +7,7 @@ from qdrant_client.models import (
     Filter,
     MatchValue,
     PointStruct,
+    FilterSelector,
     VectorParams,
 )
 
@@ -52,7 +53,11 @@ class VectorStore:
                     "document": chunk["document"],
                     "paper_title": chunk["paper_title"],
                     "section": chunk["section"],
-                    "text": chunk["text"]
+                    "text": chunk["text"],
+                    "element_type": chunk.get("element_type", "paragraph"),
+                    "label": chunk.get("label", ""),
+                    "caption": chunk.get("caption", ""),
+                    "coords": chunk.get("coords", ""),
                 }
             )
 
@@ -63,6 +68,25 @@ class VectorStore:
                 collection_name=self.collection_name,
                 points=points
             )
+
+    def delete_document(self, document):
+        """Remove old chunks for one source document before re-indexing it."""
+        if not self.client.collection_exists(self.collection_name):
+            return
+        self.client.delete(
+            collection_name=self.collection_name,
+            points_selector=FilterSelector(
+                filter=Filter(
+                    must=[
+                        FieldCondition(
+                            key="document",
+                            match=MatchValue(value=document),
+                        )
+                    ]
+                )
+            ),
+            wait=True,
+        )
 
     def search(self, query_vector, limit=5):
         result = self.client.query_points(
@@ -95,4 +119,33 @@ class VectorStore:
             limit=limit
         )
 
+        return result.points
+
+    def search_by_element_type(
+        self,
+        query_vector,
+        element_type,
+        limit=5,
+        paper_title=None,
+    ):
+        """Search a specific scientific element type, optionally within one paper."""
+        conditions = [
+            FieldCondition(
+                key="element_type",
+                match=MatchValue(value=element_type),
+            )
+        ]
+        if paper_title:
+            conditions.append(
+                FieldCondition(
+                    key="paper_title",
+                    match=MatchValue(value=paper_title),
+                )
+            )
+        result = self.client.query_points(
+            collection_name=self.collection_name,
+            query=self._to_vector(query_vector),
+            query_filter=Filter(must=conditions),
+            limit=limit,
+        )
         return result.points

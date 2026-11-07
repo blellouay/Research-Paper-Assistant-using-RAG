@@ -43,10 +43,14 @@ def _reject_duplicate_keys(pairs):
 
 def _source_block(source_number, result):
     payload = result["payload"]
+    element_type = payload.get("element_type", "paragraph")
+    label = payload.get("label", "")
     return f"""
 SOURCE {source_number}
 Paper: {payload["paper_title"]}
 Section: {payload["section"]}
+Evidence type: {element_type}
+Evidence label: {label or "none"}
 
 {payload["text"]}
 """.strip()
@@ -77,6 +81,11 @@ def build_prompt(question, context):
 You are a research paper assistant. Draft a concise answer using only the excerpts.
 Do not use outside knowledge. Cite claims as [Source 1], [Source 2], and so on.
 This is an unverified draft; a separate claim verifier will check it.
+Treat equations, tables, figures, references, and any attached figure images as
+direct evidence, not merely as descriptions. Inspect attached images when the
+question asks what a figure visually shows. If an equation source is present, reproduce its formula and
+explain its terms using the accompanying excerpts; never say the equation is
+missing when an evidence block is explicitly marked as an equation.
 
 QUESTION:
 {question}
@@ -93,6 +102,13 @@ def build_comparison_prompt(question, context):
 You are a research paper assistant. Draft a concise comparison using only the excerpts.
 Describe each system from its own paper, keep systems distinct, and cite claims as
 [Source 1], [Source 2], and so on. Do not use outside knowledge.
+Organize the answer by the categories requested in the question and cover every
+paper under every category. Say a detail is unavailable only when none of that
+paper's supplied excerpts contains it. Never use one paper's evidence to fill a
+different paper's category.
+For datasets, name both pre-training corpora and downstream benchmarks when
+available. For results, prefer concrete numerical metrics from result excerpts
+over general statements from introductions or conclusions.
 This is an unverified draft; a separate claim verifier will check every claim.
 
 QUESTION:
@@ -142,12 +158,63 @@ def generate_evidence_answer(
         if comparison
         else build_prompt(question, context)
     )
-    prompt += (
-        "\n\nReturn the final answer directly. Keep it concise, cite every factual "
-        "claim, and say that the excerpts are insufficient when the evidence does "
-        "not answer the question."
+    requested_types = {
+        "equation": ("equation", "formula"),
+        "table": ("table", "tabular"),
+        "figure": ("figure", "diagram", "chart", "graph"),
+        "reference": ("reference", "bibliography", "cited", "citation"),
+    }
+    lowered_question = question.casefold()
+    requested_type = next(
+        (kind for kind, words in requested_types.items() if any(word in lowered_question for word in words)),
+        None,
     )
+    has_requested_evidence = bool(requested_type) and any(
+        result["payload"].get("element_type") == requested_type
+        for result in selected_results
+    )
+    prompt += "\n\nReturn the final answer directly. Keep it concise and cite every factual claim."
+    if has_requested_evidence:
+        prompt += (
+            f"\nA source explicitly marked Evidence type: {requested_type} is present and "
+            "directly answers the request. You MUST reproduce the relevant content, explain "
+            "its notation or fields from the surrounding evidence, and cite it. Do not "
+            "abstain or state that it is absent."
+        )
+    else:
+        prompt += (
+            " Say that the excerpts are insufficient when the evidence does not answer "
+            "the question."
+        )
     answer = _run_chat(prompt, model, timeout, 0.1, client, json_output=False)
+    denial_phrases = (
+        "not explicitly stated",
+        "not explicitly defined",
+        "do not provide the equation",
+        "does not provide the equation",
+        "insufficient to answer",
+        "cannot be accurately explained",
+        "not possible to provide",
+    )
+    if has_requested_evidence and any(phrase in answer.casefold() for phrase in denial_phrases):
+        correction_prompt = f"""
+The previous answer incorrectly denied evidence that is visibly present.
+Answer the question from the evidence below. The {requested_type} block is the
+requested content itself. Reproduce it first, then explain it in plain language
+using the accompanying paragraph. Cite every statement. Never say the evidence
+is missing or insufficient.
+
+QUESTION:
+{question}
+
+EVIDENCE:
+{context}
+
+CORRECTED ANSWER:
+""".strip()
+        answer = _run_chat(
+            correction_prompt, model, timeout, 0.0, client, json_output=False
+        )
     return {
         "answer": answer,
         "final_answer": answer,
@@ -172,6 +239,12 @@ def _run_chat(prompt, model, timeout, temperature, client=None, json_output=Fals
     try:
         response = ollama_client.chat(**kwargs)
     except Exception as exc:
+        if client is not None:
+            if isinstance(exc, RuntimeError):
+                raise
+            raise RuntimeError(
+                f"Configured generation provider failed: {exc}"
+            ) from exc
         raise RuntimeError(
             f"Ollama generation failed for model {model!r}. "
             "Confirm that Ollama is running and the model is installed."

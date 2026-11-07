@@ -2,8 +2,10 @@
 
 A local, evidence-first question-answering system for scientific papers. The
 application parses PDFs with GROBID, preserves document structure, indexes
-section-aware chunks in Qdrant, reranks retrieved passages, and uses an Ollama
-language model to generate answers. A claim-level verification stage removes
+section-aware chunks in Qdrant, reranks retrieved passages, and uses either a
+local Ollama model or the Groq API to generate answers. Coordinate-bearing
+figures can be cropped from the original PDF and included with the retrieved
+text when Groq is selected. A claim-level verification stage removes
 unsupported statements before the final answer is shown.
 
 The Streamlit interface supports focused questions about one paper and
@@ -14,13 +16,22 @@ and optional verification details.
 
 - Upload and process multiple scientific PDFs.
 - Preserve titles, authors, abstracts, sections, and paragraph provenance.
+- Index tables, figure captions, equations, and bibliography entries as typed evidence.
 - Generate semantic embeddings with `all-MiniLM-L6-v2`.
 - Store and search vectors using Qdrant and cosine similarity.
 - Rerank passages with `ms-marco-MiniLM-L-6-v2`.
 - Restrict retrieval to one or several selected papers.
-- Generate answers locally with Ollama and `llama3.2:3b`.
+- Decompose broad comparisons into per-paper searches for objectives, methods,
+  datasets, results, limitations, and contributions.
+- Generate answers locally with Ollama; the interface defaults to `llama3.1:8b`.
+- Optionally generate answers through Groq using `qwen/qwen3.8-27b`.
 - Extract and verify atomic claims against claim-specific evidence.
 - Display citations, source excerpts, and verification verdicts.
+- Identify the evidence type and label (for example, Table 2 or Equation 4) in sources.
+- Detect structured-content questions and guarantee that a matching table, figure,
+  equation, or reference is included when that evidence exists.
+- Crop coordinate-bearing figures from source PDFs and send them to Groq's
+  vision-capable model for visual question answering.
 - Evaluate retrieval, grounding, citation validity, and abstention.
 
 ## Architecture
@@ -35,7 +46,9 @@ flowchart LR
     G[User question] --> H[Dense retrieval]
     F --> H
     H --> I[Cross-encoder reranking]
-    I --> J[Ollama draft answer]
+    I --> J[Groq or Ollama draft answer]
+    C --> O[Figure crops and typed evidence]
+    O --> J
     J --> K[Atomic claim extraction]
     K --> L[Claim-specific evidence]
     L --> M[Claim verification]
@@ -55,6 +68,7 @@ flowchart LR
 | Qdrant | `http://localhost:6333` | Vector database |
 | GROBID | `http://localhost:8070` | Scientific PDF parsing |
 | Ollama | `http://localhost:11434` | Local generation and verification |
+| Groq API | Cloud service | Optional higher-quality generation and verification |
 
 ## Installation
 
@@ -113,11 +127,25 @@ GROBID can take a minute to initialize. Its health endpoint is
 Download the configured model once, then start Ollama if necessary:
 
 ```powershell
-ollama pull llama3.2:3b
+ollama pull llama3.1:8b
 ollama serve
 ```
 
 If port `11434` is already in use, Ollama is normally already running.
+
+### Optional: Groq API
+
+Create a Groq API key, then set it for the current PowerShell session before
+starting Streamlit:
+
+```powershell
+$env:GROQ_API_KEY = "your-key-here"
+.\venv\Scripts\streamlit.exe run app.py
+```
+
+Choose **Groq API** and `qwen/qwen3.8-27b` in the sidebar. Retrieved paper
+excerpts are sent to Groq when this provider is selected; use Ollama when the
+documents must remain entirely local. Never commit an API key to the repository.
 
 ## Run the application
 
@@ -141,8 +169,14 @@ Open `http://localhost:8501` if the browser does not open automatically.
 8. Expand **Sources** to inspect the retrieved evidence.
 9. Expand **Claim verification** to inspect supported and rejected claims.
 
+When a retrieved figure has GROBID coordinates, the interface displays its
+crop directly with the answer and in the source details. With **Groq API**
+selected, up to two retrieved figure crops are also sent to the vision-capable
+model. Tables, equations, and references remain available as typed textual
+evidence with their labels and provenance.
+
 Use **Fast** answer mode for normal interactive use. It produces a grounded,
-cited answer with one Ollama call. Use **Verified** mode when claim-level
+cited answer with one generation call. Use **Verified** mode when claim-level
 checking is required; on a CPU-only machine it can take several minutes because
 it performs additional model calls for extraction and verification.
 
@@ -156,6 +190,9 @@ models are loaded into memory on demand.
 - What limitations do the authors identify?
 - Compare BERT with the original Transformer architecture.
 - How do the selected papers differ in their training objectives?
+- Explain the scaled dot-product attention equation and define each term.
+- What trend is visible in Figure 3, and what conclusion does it support?
+- Compare the main results reported in Table 2 across the selected papers.
 
 ## Tests
 
@@ -188,15 +225,24 @@ research-paper-assistant/
 │   ├── raw/                       # Uploaded PDFs
 │   └── parsed/                    # GROBID TEI/XML output
 ├── src/
-│   ├── ingestion/                 # Parsing, cleaning, and chunking
+│   ├── ingestion/                 # Parsing, chunking, and figure extraction
 │   ├── embeddings/                # Sentence Transformer embeddings
 │   ├── retrieval/                 # Search, reranking, evidence routing
-│   └── generation/                # Generation and claim verification
+│   └── generation/                # Groq/Ollama generation and verification
 ├── evaluation/                    # Evaluation data and runners
 ├── tests/                         # Unit tests
 ├── notebooks/                     # Development notebook
-└── poster/                        # Poster sources and generated PDFs
+├── poster/                        # LaTeX poster sources and assets
+└── output/pdf/                    # Generated poster PDF
 ```
+
+## Project poster
+
+The A0 poster summarizes the ingestion, multimodal retrieval, multi-paper
+comparison, claim verification, interface, and evaluation workflow. Its LaTeX
+source is [`poster/research_paper_assistant_rag_streamlit.tex`](poster/research_paper_assistant_rag_streamlit.tex).
+The latest compiled poster is written to
+`output/pdf/research_paper_assistant_reference_style_poster.pdf`.
 
 ## Troubleshooting
 
@@ -234,7 +280,8 @@ ollama list
 Invoke-WebRequest http://localhost:11434/api/tags
 ```
 
-The model list must contain `llama3.2:3b`.
+The model list must contain the model selected in the interface, which defaults
+to `llama3.1:8b`.
 
 ### No papers appear in the search scope
 
@@ -244,16 +291,19 @@ when its container is replaced.
 
 ### The first request is slow
 
-This is expected while Sentence Transformer models load and Ollama performs the
-draft, extraction, and verification passes.
+This is expected while Sentence Transformer models load and the selected
+provider performs the draft, extraction, and verification passes.
 
 ## Current limitations
 
 - Dense retrieval can miss highly specific terminology.
 - Small local language models can make semantic verification errors.
 - Claim-level verification requires several model calls and increases latency.
-- Re-indexing a paper does not automatically remove its older vectors.
 - Evaluation quality depends on `evaluation/questions.json` coverage.
+- Visual interpretation requires a coordinate-bearing figure and the Groq
+  provider; Ollama receives the searchable figure caption and related text only.
+- Equations are indexed as the textual/MathML representation supplied by
+  GROBID; complex PDF math may require specialized OCR.
 
 ## Technology stack
 
@@ -261,5 +311,5 @@ draft, extraction, and verification passes.
 - GROBID and TEI/XML
 - Sentence Transformers
 - Qdrant
-- Ollama and Llama 3.2 3B
+- Ollama or the Groq API
 - Docker

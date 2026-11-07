@@ -1,6 +1,7 @@
 jupyterlab
 ipykernel
 pypdf
+PyMuPDF
 streamlit
 requests
 sentence-transformers

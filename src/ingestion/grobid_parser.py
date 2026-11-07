@@ -6,6 +6,13 @@ import re
 TEI_NS = {"tei": "http://www.tei-c.org/ns/1.0"}
 
 
+def _attribute(element, name):
+    """Return a TEI attribute, including attributes in the XML namespace."""
+    if element is None:
+        return ""
+    return element.get(name, element.get(f"{{http://www.w3.org/XML/1998/namespace}}{name}", ""))
+
+
 def get_text(element):
     """
     Extract all text from an XML element, including nested tags.
@@ -141,6 +148,71 @@ def extract_authors(root):
     return authors
 
 
+def _table_text(table):
+    """Convert a TEI table to compact, readable rows for embedding and display."""
+    rows = []
+    for row in table.findall(".//tei:row", TEI_NS):
+        cells = [get_text(cell) for cell in row.findall("tei:cell", TEI_NS)]
+        cells = [cell for cell in cells if cell]
+        if cells:
+            rows.append(" | ".join(cells))
+    return "\n".join(rows) or get_text(table)
+
+
+def extract_section_elements(div, section_title):
+    """Extract non-paragraph scientific evidence directly owned by a section."""
+    elements = []
+    for child in list(div):
+        tag = child.tag.rsplit("}", 1)[-1]
+        if tag == "figure":
+            kind = "table" if child.get("type", "").lower() == "table" or child.find("tei:table", TEI_NS) is not None else "figure"
+            label = get_text(child.find("tei:label", TEI_NS))
+            caption = get_text(child.find("tei:head", TEI_NS)) or get_text(child.find("tei:figDesc", TEI_NS))
+            table = child.find("tei:table", TEI_NS)
+            graphic = child.find("tei:graphic", TEI_NS)
+            coords = graphic.get("coords", "") if graphic is not None else ""
+            content = _table_text(table) if table is not None else get_text(child.find("tei:figDesc", TEI_NS))
+            text = ". ".join(part for part in (f"{kind.title()} {label}".strip(), caption, content) if part)
+            if text:
+                elements.append({"type": kind, "label": label, "caption": caption, "text": text, "section": section_title, "coords": coords})
+        elif tag == "formula":
+            label = get_text(child.find("tei:label", TEI_NS)) or _attribute(child, "id")
+            formula = get_text(child)
+            if formula:
+                elements.append({"type": "equation", "label": label, "caption": "", "text": f"Equation {label}: {formula}".strip(), "section": section_title})
+    return elements
+
+
+def extract_body_elements(root):
+    """Extract figures/tables placed directly under TEI body, outside sections."""
+    body = root.find(".//tei:text/tei:body", TEI_NS)
+    if body is None:
+        return []
+    wrapper = ET.Element(f"{{{TEI_NS['tei']}}}div")
+    for child in list(body):
+        if child.tag.rsplit("}", 1)[-1] in {"figure", "formula"}:
+            wrapper.append(child)
+    return extract_section_elements(wrapper, "Figures and Tables")
+
+
+def extract_references(root):
+    """Extract bibliography entries as independently retrievable evidence."""
+    references = []
+    for number, entry in enumerate(root.findall(".//tei:text/tei:back//tei:listBibl/*", TEI_NS), 1):
+        text = get_text(entry)
+        if not text:
+            continue
+        reference_id = _attribute(entry, "id") or str(number)
+        references.append({
+            "type": "reference",
+            "label": reference_id,
+            "caption": "",
+            "text": f"Reference {reference_id}: {text}",
+            "section": "References",
+        })
+    return references
+
+
 def parse_section(div, parent_title=""):
     """
     Recursively parse a TEI <div> section and its subsections.
@@ -180,6 +252,7 @@ def parse_section(div, parent_title=""):
         "title": heading,
         "full_title": full_title,
         "paragraphs": paragraphs,
+        "elements": extract_section_elements(div, full_title or "Body"),
         "subsections": subsections
     }
 
@@ -219,6 +292,8 @@ def parse_grobid_tei(tei_path):
         "authors": extract_authors(root),
         "abstract": extract_abstract(root),
         "sections": extract_sections(root),
+        "elements": extract_body_elements(root),
+        "references": extract_references(root),
         "source_file": tei_path.name
     }
 
