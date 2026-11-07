@@ -231,18 +231,8 @@ research-paper-assistant/
 │   └── generation/                # Groq/Ollama generation and verification
 ├── evaluation/                    # Evaluation data and runners
 ├── tests/                         # Unit tests
-├── notebooks/                     # Development notebook
-├── poster/                        # LaTeX poster sources and assets
-└── output/pdf/                    # Generated poster PDF
+└── notebooks/                     # Development notebook
 ```
-
-## Project poster
-
-The A0 poster summarizes the ingestion, multimodal retrieval, multi-paper
-comparison, claim verification, interface, and evaluation workflow. Its LaTeX
-source is [`poster/research_paper_assistant_rag_streamlit.tex`](poster/research_paper_assistant_rag_streamlit.tex).
-The latest compiled poster is written to
-`output/pdf/research_paper_assistant_reference_style_poster.pdf`.
 
 ## Troubleshooting
 
